@@ -1,0 +1,36 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/ERC20DL202330550291.sol": {
+      "content": "// SPDX-License-Identifier: Apache-2.0\r\npragma solidity ^0.8.20;\r\n\r\ncontract ERC20Dl202330550291 {\r\n    // =========================================================================\r\n// 【1】代币数据核心：状态变量\r\n// =========================================================================\r\n\r\n// _balances: 存储每个地址拥有的代币数量 (地址 => 余额)\r\nmapping(address => uint256) private _balances;\r\n\r\n// _allowances: 存储授权额度 (所有者 => 授权使用方 => 额度)\r\nmapping(address => mapping(address => uint256)) private _allowances;\r\n\r\n// _totalSupply: 代币总发行量\r\nuint256 private _totalSupply;\r\n\r\n// 代币元数据\r\nstring private _name = \"ERC20Dl202330550291\";\r\nstring private _symbol = \"ERC20Dl\";\r\nuint8 private constant _decimals = 18; // 代币精度，默认 18 位\r\n\r\n// =========================================================================\r\n// 【2】ERC20 标准事件\r\n// =========================================================================\r\n\r\n// Transfer 事件：在代币发行、销毁或转移时必须触发\r\nevent Transfer(address indexed _from, address indexed _to, uint256 _value);\r\n\r\n// Approval 事件：在授权操作时必须触发\r\nevent Approval(address indexed _owner, address indexed _spender, uint256 _value);\r\n\r\n// =========================================================================\r\n// 【3】合约主体：DLToken\r\n// =========================================================================\r\n    constructor() {}\r\n\r\n    // name(): 返回代币的名称\r\n    function name() public view returns (string memory) {\r\n        return _name;\r\n    }\r\n\r\n    // symbol(): 返回代币的缩写符号\r\n    function symbol() public view returns (string memory) {\r\n        return _symbol;\r\n    }\r\n\r\n    // decimals(): 返回代币精度位数\r\n    function decimals() public pure returns (uint8) {\r\n        return _decimals;\r\n    }\r\n\r\n    // totalSupply(): 返回代币总发行数量\r\n    function totalSupply() public view returns (uint256) {\r\n        return _totalSupply;\r\n    }\r\n\r\n    // balanceOf(address _owner): 查询某个地址下的代币数量\r\n    function balanceOf(address _owner) public view returns (uint256 balance) {\r\n        return _balances[_owner];\r\n    }\r\n\r\n    // allowance(address _owner, address _spender): 查询授权额度\r\n    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {\r\n        return _allowances[_owner][_spender];\r\n    }\r\n\r\n    // ---------------------------------------------------------------------\r\n    // ERC20 核心交易函数 (Core Transaction Functions)\r\n    // ---------------------------------------------------------------------\r\n\r\n    // transfer(address _to, uint256 _value): 向某个地址转账代币\r\n    function transfer(address _to, uint256 _value) public returns (bool success) {\r\n        // 检查余额\r\n        require(_balances[msg.sender] >= _value, \"ERC20: transfer amount exceeds balance\");\r\n\r\n        // 扣除调用者余额，增加接收方余额\r\n        _balances[msg.sender] -= _value;\r\n        _balances[_to] += _value;\r\n\r\n        // 触发事件\r\n        emit Transfer(msg.sender, _to, _value);\r\n        return true;\r\n    }\r\n\r\n    // approve(address _spender, uint256 _value): 授权第三方使用代币\r\n    function approve(address _spender, uint256 _value) public returns (bool success) {\r\n        // 记录授权额度\r\n        _allowances[msg.sender][_spender] = _value;\r\n\r\n        // 触发事件\r\n        emit Approval(msg.sender, _spender, _value);\r\n        return true;\r\n    }\r\n\r\n    // transferFrom(address _from, address _to, uint256 _value): 从授权地址转账\r\n    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {\r\n        // 1. 检查授权额度\r\n        require(_allowances[_from][msg.sender] >= _value, \"ERC20: transfer amount exceeds allowance\");\r\n        // 2. 检查余额\r\n        require(_balances[_from] >= _value, \"ERC20: transfer amount exceeds balance\");\r\n\r\n        // 3. 扣除授权额度\r\n        _allowances[_from][msg.sender] -= _value;\r\n\r\n        // 4. 转移代币\r\n        _balances[_from] -= _value;\r\n        _balances[_to] += _value;\r\n\r\n        // 5. 触发事件\r\n        emit Transfer(_from, _to, _value);\r\n        return true;\r\n    }\r\n\r\n    // ---------------------------------------------------------------------\r\n    // 实验额外要求的 Mint/Burn 函数\r\n    // ---------------------------------------------------------------------\r\n\r\n    // mint(uint256 value): 发行资产（铸币）\r\n    function mint(uint256 value) public {\r\n        // 增加总供应量\r\n        _totalSupply += value;\r\n        // 增加调用者余额\r\n        _balances[msg.sender] += value;\r\n\r\n        // 触发 Transfer 事件 (从 0x0 地址到铸币者)\r\n        emit Transfer(address(0), msg.sender, value);\r\n    }\r\n\r\n    // burn(uint256 value): 销毁资产\r\n    function burn(uint256 value) public {\r\n        // 检查余额是否足够销毁\r\n        require(_balances[msg.sender] >= value, \"ERC20: burn amount exceeds balance\");\r\n\r\n        // 减少总供应量\r\n        _totalSupply -= value;\r\n        // 减少调用者余额\r\n        _balances[msg.sender] -= value;\r\n\r\n        // 触发 Transfer 事件 (从销毁者到 0x0 地址)\r\n        emit Transfer(msg.sender, address(0), value);\r\n    }\r\n}"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "evmVersion": "paris",
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}
